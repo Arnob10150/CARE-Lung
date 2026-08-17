@@ -16,7 +16,7 @@ binary decision. Alongside the pipeline, the repository implements the
 | Metric | Value | 95% CI (patient-grouped bootstrap) |
 |---|---|---|
 | AUROC | 0.832 | 0.758 – 0.897 |
-| PR-AUC | 0.958 | — |
+| PR-AUC | 0.958 | n/a |
 | Sensitivity | 0.720 | 0.63 – 0.81 |
 | Specificity | 0.769 | 0.60 – 0.92 |
 | ECE | 0.165 | 0.115 – 0.233 |
@@ -25,7 +25,7 @@ binary decision. Alongside the pipeline, the repository implements the
 scores 0.794 accuracy / 0.885 F1, so accuracy and F1 are not meaningful gains on
 this cohort. A baseline using **recording device alone and no audio** reaches
 AUROC 0.784, and the paired difference against CARE-Lung is +0.047 with a 95%
-interval of [−0.047, +0.141] — it contains zero. Holding device constant
+interval of [-0.047, +0.141], which contains zero. Holding device constant
 (Meditron, the only mixed-class cohort) gives AUROC 0.707 [0.576, 0.830].
 
 What survives the device control is the methodology, not the headline: within a
@@ -76,7 +76,7 @@ All seeds are fixed (`SEED = 42`); results are deterministic.
 |---|---|
 | `run_care_lung_study.py` | Feature extraction from ICBHI audio, fixed-split training, cycle calibration |
 | `run_cv_study.py` | Patient-level stratified 5-fold CV over all six aggregators |
-| `run_revision_analyses.py` | Patient-grouped bootstrap CIs, paired ΔAUROC, within-fold manifest, pre-specified aggregator ablation, cross-conformal (marginal + Mondrian), risk–coverage |
+| `run_revision_analyses.py` | Patient-grouped bootstrap CIs, paired ΔAUROC, within-fold manifest, pre-specified aggregator ablation, cross-conformal (marginal + Mondrian), risk-coverage |
 | `run_device_audit.py` | Device-only baseline, paired test against it, device-controlled (within-Meditron) evaluation, per-device referral rates |
 | `export_audit_artifacts.py` | Writes the released CSV artifacts |
 | `make_figures.py` | Regenerates all nine paper figures as vector PDFs (≤12 cm wide, ≥7 pt text) |
@@ -86,18 +86,18 @@ All seeds are fixed (`SEED = 42`); results are deterministic.
 `results/audit_artifacts/` is committed so the reported numbers can be checked
 without re-running anything:
 
-- `fold_split_manifest.csv` — patient IDs for every RF-train / calibration /
+- `fold_split_manifest.csv`: patient IDs for every RF-train / calibration /
   threshold / test subset in every fold
-- `patient_predictions.csv` — per-patient out-of-fold score and prediction for
+- `patient_predictions.csv`: per-patient out-of-fold score and prediction for
   all six aggregators and six ablation variants, with fold index and device
-- `fold_thresholds.csv` — the Youden thresholds selected within each fold
-- `pooled_metrics_with_ci.csv` — pooled metrics with bootstrap intervals
-- `risk_coverage_curve.csv`, `conformal_coverage.csv` — referral behaviour
-- `device_confound_audit.csv` — the three device controls
+- `fold_thresholds.csv`: the Youden thresholds selected within each fold
+- `pooled_metrics_with_ci.csv`: pooled metrics with bootstrap intervals
+- `risk_coverage_curve.csv`, `conformal_coverage.csv`: referral behaviour
+- `device_confound_audit.csv`: the three device controls
 
 ## Limitations
 
-126 patients (26 healthy); device is confounded with class — all 26 healthy
+126 patients (26 healthy); device is confounded with class. All 26 healthy
 patients were recorded with a Meditron stethoscope, so three of the four device
 cohorts are single-class. The pooled AUROC is not statistically separable from a
 device-only baseline. Treat these results as evidence for an evaluation
@@ -120,4 +120,4 @@ methodology, not for a deployable system.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
