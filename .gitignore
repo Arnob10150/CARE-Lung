@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+results/figures/
+results/camera_ready_figures/
+results/*.pkl
+.ipynb_checkpoints/

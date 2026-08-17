@@ -1,0 +1,13 @@
+model,fold0,fold1,fold2,fold3,fold4
+Count-ratio (BME106-style),0.405,0.605,0.05,0.0164,0.04
+Confidence-weighted fraction,0.3798,0.49,0.38,0.235,0.225
+CARE-Lung (regularized distribution aggregator),0.705,0.58,0.405,0.495,0.455
+Gradient-boosted distribution aggregator,0.19,0.635,0.895,0.205,0.675
+SVM + spectral summaries,0.875,0.785,0.56,0.9,0.67
+CARE-Lung++ (calibrated ensemble),0.75,0.595,0.535,0.645,0.46
+S1: mean probability,0.495,0.545,0.47,0.625,0.645
+S2: mean + SD,0.615,0.405,0.31,0.6,0.535
+S3: mean + SD + log cycles,0.445,0.44,0.41,0.415,0.525
+S4: mean + SD + median + max,0.5547,0.564,0.325,0.675,0.45
+S6: quantile summary,0.67,0.585,0.52,0.535,0.48
+S14: full descriptor (CARE-Lung),0.705,0.58,0.405,0.495,0.455

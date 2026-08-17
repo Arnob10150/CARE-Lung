@@ -1,0 +1,31 @@
+control,quantity,value,lo95,hi95
+trivial_all_abnormal,accuracy,0.7937,,
+trivial_all_abnormal,f1,0.885,,
+trivial_all_abnormal,auroc,0.5,,
+trivial_all_abnormal,pr_auc,0.7937,,
+device_only,auroc,0.7842,0.7031,0.8545
+device_only,pr_auc,0.9387,0.904,0.965
+paired_vs_device_only,delta_auroc,0.0471,-0.0465,0.1413
+paired_vs_device_only,delta_pr_auc,0.0196,-0.0044,0.0474
+within_meditron,auroc,0.7075,0.5765,0.8297
+within_meditron,pr_auc,0.8313,0.7177,0.9157
+within_meditron,sensitivity,0.4737,,
+within_meditron,specificity,0.7692,,
+within_meditron,ece,0.1575,0.1029,0.2844
+within_meditron,prevalence,0.5938,,
+within_meditron_by_model,Count-ratio (BME106-style),0.5789,0.4624,0.699
+within_meditron_by_model,Confidence-weighted fraction,0.586,0.442,0.7262
+within_meditron_by_model,CARE-Lung (regularized distribution aggregator),0.7075,0.5765,0.8297
+within_meditron_by_model,Gradient-boosted distribution aggregator,0.6766,0.5397,0.8084
+within_meditron_by_model,SVM + spectral summaries,0.6771,0.5357,0.798
+within_meditron_by_model,CARE-Lung++ (calibrated ensemble),0.6943,0.5594,0.8165
+within_meditron_by_model,S1: mean probability,0.6306,0.4885,0.7708
+within_meditron_by_model,S2: mean + SD,0.6164,0.4729,0.7517
+within_meditron_by_model,S3: mean + SD + log cycles,0.7419,0.6134,0.8553
+within_meditron_by_model,S4: mean + SD + median + max,0.6407,0.497,0.7763
+within_meditron_by_model,S6: quantile summary,0.7065,0.5736,0.8271
+within_meditron_by_model,S14: full descriptor (CARE-Lung),0.7075,0.5765,0.8297
+referral_rate_by_device,AKGC417L,0.0,,
+referral_rate_by_device,Litt3200,0.2222,,
+referral_rate_by_device,LittC2SE,0.381,,
+referral_rate_by_device,Meditron,0.4531,,
