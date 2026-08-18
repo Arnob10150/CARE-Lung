@@ -75,8 +75,11 @@ def fig01_reliability():
     y = art["y_cycle_test"].astype(int)
     before, after = art["uncal_cycle_prob_test"], art["cal_cycle_prob_test"]
 
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.48))
+    # both panels use the same two series, so one shared legend below the
+    # figure keeps it off the curves and the histogram bars
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.74))
     bins = np.linspace(0, 1, 9)
+    handles, labels = [], []
     for prob, lab, col, mk in [(before, "Uncalibrated", C_GREY, "o"),
                                (after, "Isotonic-calibrated", C_PROP, "s")]:
         xs, ys, ns = [], [], []
@@ -86,20 +89,24 @@ def fig01_reliability():
                 xs.append(float(np.mean(prob[m]))); ys.append(float(np.mean(y[m])))
                 ns.append(int(m.sum()))
         ece = float(np.sum(np.array(ns) / len(prob) * np.abs(np.array(ys) - np.array(xs))))
-        ax[0].plot(xs, ys, marker=mk, ms=3.4, lw=1.4, color=col, label=f"{lab} ({ece:.3f})")
-    ax[0].plot([0, 1], [0, 1], "k--", lw=0.9, alpha=0.6, label="Perfect")
+        line, = ax[0].plot(xs, ys, marker=mk, ms=3.4, lw=1.4, color=col)
+        handles.append(line); labels.append(f"{lab} ({ece:.3f})")
+    ref, = ax[0].plot([0, 1], [0, 1], "k--", lw=0.9, alpha=0.6)
+    handles.append(ref); labels.append("Perfect")
     ax[0].set_xlabel("Mean predicted probability")
     ax[0].set_ylabel("Empirical abnormal rate")
-    ax[0].set_xlim(-0.02, 1.02); ax[0].set_ylim(-0.02, 1.02)
+    ax[0].set_xlim(-0.02, 1.02); ax[0].set_ylim(-0.02, 1.04)
     ax[0].set_title("(a) Reliability curve")
-    ax[0].legend(frameon=False, loc="upper left", handlelength=1.5)
 
-    ax[1].hist(before, bins=bins, alpha=0.55, color=C_GREY, label="Uncalibrated", density=True)
-    ax[1].hist(after, bins=bins, alpha=0.55, color=C_PROP, label="Calibrated", density=True)
+    ax[1].hist(before, bins=bins, alpha=0.55, color=C_GREY, density=True)
+    ax[1].hist(after, bins=bins, alpha=0.55, color=C_PROP, density=True)
     ax[1].set_xlabel("Predicted probability"); ax[1].set_ylabel("Density")
     ax[1].set_title("(b) Score distribution")
-    ax[1].legend(frameon=False, loc="upper right", handlelength=1.5)
-    fig.tight_layout(pad=0.3)
+
+    fig.tight_layout(pad=0.3, rect=(0, 0.13, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
+               fontsize=7.0, handlelength=1.4, columnspacing=1.0,
+               handletextpad=0.4, bbox_to_anchor=(0.5, -0.015))
     save(fig, "Fig01-44.pdf")
 
 
@@ -167,18 +174,21 @@ def fig03_rocpr():
     y = art["y_true"].astype(int)
     prob = {n: art[f"oof_prob__{i}"] for i, n in enumerate(names)}
 
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.54))
+    # six series will not fit inside either panel without covering the curves,
+    # so the legend is placed under both panels as a shared figure legend
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.90))
+    handles, labels = [], []
     for n in SHORT:
         fpr, tpr, _ = roc_curve(y, prob[n])
         lw = 1.9 if n == PROP else 1.1
-        ax[0].plot(fpr, tpr, color=COLORS[n], lw=lw, zorder=5 if n == PROP else 2,
-                   label=f"{SHORT[n]} ({roc_auc_score(y, prob[n]):.3f})")
+        line, = ax[0].plot(fpr, tpr, color=COLORS[n], lw=lw,
+                           zorder=5 if n == PROP else 2)
+        handles.append(line)
+        labels.append(f"{SHORT[n]} ({roc_auc_score(y, prob[n]):.3f})")
     ax[0].plot([0, 1], [0, 1], "k--", lw=0.8, alpha=0.45)
     ax[0].set_xlabel("False positive rate"); ax[0].set_ylabel("True positive rate")
     ax[0].set_title("(a) Pooled out-of-fold ROC")
     ax[0].set_xlim(-0.02, 1.02); ax[0].set_ylim(-0.02, 1.04)
-    ax[0].legend(frameon=False, loc="lower right", fontsize=7.0, handlelength=1.3,
-                 labelspacing=0.22, borderpad=0.15)
 
     prev = float(np.mean(y))
     for n in SHORT:
@@ -187,9 +197,13 @@ def fig03_rocpr():
         ax[1].plot(rc, pr, color=COLORS[n], lw=lw, zorder=5 if n == PROP else 2)
     ax[1].axhline(prev, color="k", ls="--", lw=0.8, alpha=0.45)
     ax[1].set_xlabel("Recall"); ax[1].set_ylabel("Precision")
-    ax[1].set_title("(b) Precision--recall")
+    ax[1].set_title("(b) Precision-recall")
     ax[1].set_xlim(-0.02, 1.02); ax[1].set_ylim(0.4, 1.04)
-    fig.tight_layout(pad=0.3)
+    fig.tight_layout(pad=0.3, rect=(0, 0.19, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
+               fontsize=7.0, handlelength=1.5, columnspacing=1.4,
+               handletextpad=0.5, labelspacing=0.35,
+               bbox_to_anchor=(0.5, -0.015))
     save(fig, "Fig03-44.pdf")
 
 
@@ -228,7 +242,8 @@ def fig05_calibration(rev, o):
     a.bar(xs, ece, color=[COLORS[n] for n in order], width=0.66,
           yerr=err, error_kw=dict(lw=0.7, capsize=2.0, ecolor="#374151"))
     a.set_xticks(xs, [SHORT[n] for n in order], rotation=18, ha="right")
-    a.set_ylabel("Expected calibration error")
+    # short label: the panel is only ~4 cm tall, so the full phrase would clip
+    a.set_ylabel("ECE")
     fig.tight_layout(pad=0.25)
     save(fig, "Fig05-44.pdf")
 
@@ -263,9 +278,13 @@ def fig07_conformal(rev, o):
     a.plot(xs, [mond[x]["cov_abn"]["mean"] for x in al], "--^", color=C_ABN, ms=3.2, lw=1.1, alpha=.85, label="Mond., abn.")
     a.plot(xs, [mond[x]["cov_hea"]["mean"] for x in al], "--^", color=C_HEA, ms=3.2, lw=1.1, alpha=.85, label="Mond., healthy")
     a.set_xlabel("Target error level $\\alpha$"); a.set_ylabel("Empirical coverage")
-    a.set_xticks(xs); a.set_ylim(0.60, 1.06)
+    # headroom above the curves so the legend never sits on the data
+    a.set_xticks(xs); a.set_ylim(0.60, 1.42)
+    a.set_yticks([0.6, 0.7, 0.8, 0.9, 1.0])
     a.set_title("(a) Class-conditional coverage")
-    a.legend(frameon=False, loc="lower left", fontsize=7.0, handlelength=1.3, labelspacing=0.2)
+    a.legend(frameon=False, loc="upper center", fontsize=7.0, ncol=2,
+             handlelength=1.3, labelspacing=0.25, columnspacing=0.9,
+             handletextpad=0.4, borderpad=0.1, borderaxespad=0.15)
 
     a = ax[1]
     a.plot(xs, [marg[x]["refer"]["mean"] for x in al], "-o", color=C_PROP, ms=3.2, lw=1.2, label="Refer, marg.")
@@ -273,9 +292,12 @@ def fig07_conformal(rev, o):
     a.plot(xs, [marg[x]["sel_risk"]["mean"] for x in al], "-o", color="#334155", ms=3.2, lw=1.2, label="Risk, marg.")
     a.plot(xs, [mond[x]["sel_risk"]["mean"] for x in al], "--^", color="#334155", ms=3.2, lw=1.1, alpha=.8, label="Risk, Mond.")
     a.set_xlabel("Target error level $\\alpha$"); a.set_ylabel("Rate")
-    a.set_xticks(xs); a.set_ylim(0, 0.72)
+    a.set_xticks(xs); a.set_ylim(0, 0.94)
+    a.set_yticks([0, 0.2, 0.4, 0.6])
     a.set_title("(b) Referral rate and risk")
-    a.legend(frameon=False, loc="upper right", fontsize=7.0, handlelength=1.3, labelspacing=0.2)
+    a.legend(frameon=False, loc="upper center", fontsize=7.0, ncol=2,
+             handlelength=1.3, labelspacing=0.25, columnspacing=0.9,
+             handletextpad=0.4, borderpad=0.1, borderaxespad=0.15)
     fig.tight_layout(pad=0.3)
     save(fig, "Fig07-44.pdf")
 
