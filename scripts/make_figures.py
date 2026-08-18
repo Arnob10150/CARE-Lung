@@ -77,7 +77,7 @@ def fig01_reliability():
 
     # both panels use the same two series, so one shared legend below the
     # figure keeps it off the curves and the histogram bars
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.74))
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.62))
     bins = np.linspace(0, 1, 9)
     handles, labels = [], []
     for prob, lab, col, mk in [(before, "Uncalibrated", C_GREY, "o"),
@@ -176,7 +176,7 @@ def fig03_rocpr():
 
     # six series will not fit inside either panel without covering the curves,
     # so the legend is placed under both panels as a shared figure legend
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.90))
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.78))
     handles, labels = [], []
     for n in SHORT:
         fpr, tpr, _ = roc_curve(y, prob[n])
@@ -270,7 +270,11 @@ def fig07_conformal(rev, o):
     marg, mond = rev["cross_conformal_marginal"], rev["cross_conformal_mondrian"]
     al = sorted(marg, key=float); xs = np.array([float(x) for x in al])
 
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.48))
+    # Explicit geometry rather than tight_layout: the two legends live below
+    # their own panels, and tight_layout does not reserve room for artists
+    # anchored outside the axes, which previously squashed the plots.
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.76))
+    fig.subplots_adjust(left=0.115, right=0.985, top=0.91, bottom=0.44, wspace=0.40)
     a = ax[0]
     a.plot(xs, 1 - xs, "k:", lw=0.9, label="Target $1-\\alpha$")
     a.plot(xs, [marg[x]["cov_abn"]["mean"] for x in al], "-o", color=C_ABN, ms=3.2, lw=1.2, label="Marg., abn.")
@@ -278,13 +282,10 @@ def fig07_conformal(rev, o):
     a.plot(xs, [mond[x]["cov_abn"]["mean"] for x in al], "--^", color=C_ABN, ms=3.2, lw=1.1, alpha=.85, label="Mond., abn.")
     a.plot(xs, [mond[x]["cov_hea"]["mean"] for x in al], "--^", color=C_HEA, ms=3.2, lw=1.1, alpha=.85, label="Mond., healthy")
     a.set_xlabel("Target error level $\\alpha$"); a.set_ylabel("Empirical coverage")
-    # headroom above the curves so the legend never sits on the data
-    a.set_xticks(xs); a.set_ylim(0.60, 1.42)
+    a.set_xticks(xs); a.set_ylim(0.60, 1.05)
     a.set_yticks([0.6, 0.7, 0.8, 0.9, 1.0])
     a.set_title("(a) Class-conditional coverage")
-    a.legend(frameon=False, loc="upper center", fontsize=7.0, ncol=2,
-             handlelength=1.3, labelspacing=0.25, columnspacing=0.9,
-             handletextpad=0.4, borderpad=0.1, borderaxespad=0.15)
+    ha, la = a.get_legend_handles_labels()
 
     a = ax[1]
     a.plot(xs, [marg[x]["refer"]["mean"] for x in al], "-o", color=C_PROP, ms=3.2, lw=1.2, label="Refer, marg.")
@@ -292,13 +293,17 @@ def fig07_conformal(rev, o):
     a.plot(xs, [marg[x]["sel_risk"]["mean"] for x in al], "-o", color="#334155", ms=3.2, lw=1.2, label="Risk, marg.")
     a.plot(xs, [mond[x]["sel_risk"]["mean"] for x in al], "--^", color="#334155", ms=3.2, lw=1.1, alpha=.8, label="Risk, Mond.")
     a.set_xlabel("Target error level $\\alpha$"); a.set_ylabel("Rate")
-    a.set_xticks(xs); a.set_ylim(0, 0.94)
+    a.set_xticks(xs); a.set_ylim(0, 0.62)
     a.set_yticks([0, 0.2, 0.4, 0.6])
     a.set_title("(b) Referral rate and risk")
-    a.legend(frameon=False, loc="upper center", fontsize=7.0, ncol=2,
-             handlelength=1.3, labelspacing=0.25, columnspacing=0.9,
-             handletextpad=0.4, borderpad=0.1, borderaxespad=0.15)
-    fig.tight_layout(pad=0.3)
+    hb, lb = a.get_legend_handles_labels()
+
+    # legends anchored in figure coordinates, centred under each panel
+    lkw = dict(frameon=False, fontsize=7.0, ncol=2, handlelength=1.3,
+               labelspacing=0.32, columnspacing=1.0, handletextpad=0.4,
+               borderpad=0.0, loc="upper center")
+    fig.legend(ha, la, bbox_to_anchor=(0.30, 0.28), **lkw)
+    fig.legend(hb, lb, bbox_to_anchor=(0.79, 0.28), **lkw)
     save(fig, "Fig07-44.pdf")
 
 
