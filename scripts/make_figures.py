@@ -106,7 +106,7 @@ def fig01_reliability():
     fig.tight_layout(pad=0.3, rect=(0, 0.13, 1, 1))
     fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
                fontsize=7.0, handlelength=1.4, columnspacing=1.0,
-               handletextpad=0.4, bbox_to_anchor=(0.5, -0.015))
+               handletextpad=0.4, bbox_to_anchor=(0.5, -0.045))
     save(fig, "Fig01-44.pdf")
 
 
@@ -203,7 +203,7 @@ def fig03_rocpr():
     fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
                fontsize=7.0, handlelength=1.5, columnspacing=1.4,
                handletextpad=0.5, labelspacing=0.35,
-               bbox_to_anchor=(0.5, -0.015))
+               bbox_to_anchor=(0.5, -0.045))
     save(fig, "Fig03-44.pdf")
 
 
@@ -273,8 +273,8 @@ def fig07_conformal(rev, o):
     # Explicit geometry rather than tight_layout: the two legends live below
     # their own panels, and tight_layout does not reserve room for artists
     # anchored outside the axes, which previously squashed the plots.
-    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.76))
-    fig.subplots_adjust(left=0.115, right=0.985, top=0.91, bottom=0.44, wspace=0.40)
+    fig, ax = plt.subplots(1, 2, figsize=(MAXW, 1.92))
+    fig.subplots_adjust(left=0.115, right=0.985, top=0.92, bottom=0.55, wspace=0.40)
     a = ax[0]
     a.plot(xs, 1 - xs, "k:", lw=0.9, label="Target $1-\\alpha$")
     a.plot(xs, [marg[x]["cov_abn"]["mean"] for x in al], "-o", color=C_ABN, ms=3.2, lw=1.2, label="Marg., abn.")
@@ -302,8 +302,8 @@ def fig07_conformal(rev, o):
     lkw = dict(frameon=False, fontsize=7.0, ncol=2, handlelength=1.3,
                labelspacing=0.32, columnspacing=1.0, handletextpad=0.4,
                borderpad=0.0, loc="upper center")
-    fig.legend(ha, la, bbox_to_anchor=(0.30, 0.28), **lkw)
-    fig.legend(hb, lb, bbox_to_anchor=(0.79, 0.28), **lkw)
+    fig.legend(ha, la, bbox_to_anchor=(0.30, 0.295), **lkw)
+    fig.legend(hb, lb, bbox_to_anchor=(0.79, 0.295), **lkw)
     save(fig, "Fig07-44.pdf")
 
 
