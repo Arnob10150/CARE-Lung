@@ -64,7 +64,11 @@ PROP = "CARE-Lung (regularized distribution aggregator)"
 
 def save(fig, name):
     p = OUT / name
-    fig.savefig(p)
+    # savefig.bbox="tight" silently applies the matplotlib default of
+    # 0.1in padding on every side (0.2in added to width and height) unless
+    # pad_inches is overridden here -- that invisible margin is what pushed
+    # Fig 2 to 12.21 cm despite its visible ink measuring only 11.51 cm.
+    fig.savefig(p, pad_inches=0.02)
     plt.close(fig)
     print(f"  {name}")
 
@@ -112,57 +116,121 @@ def fig01_reliability():
 
 # --------------------------------------------------------------- Fig 2
 def fig02_architecture():
-    """Pipeline diagram. Text kept short so every label clears 7 pt at 11.94 cm."""
-    fig, ax = plt.subplots(figsize=(MAXW, 2.30))
-    ax.set_xlim(0, 100); ax.set_ylim(0, 62); ax.axis("off")
+    """Pipeline diagram, same content and layout as the original design
+    (full descriptive labels, five nodes in row (a), the conformal set
+    notation spelled out in row (c)), but built directly at print size.
 
-    def box(cx, cy, w, h, title, detail, fc):
-        ax.add_patch(FancyBboxPatch((cx - w / 2, cy - h / 2), w, h,
-                                    boxstyle="round,pad=0.4,rounding_size=0.9",
-                                    lw=0.7, edgecolor="#374151", facecolor=fc, zorder=2))
-        ax.text(cx, cy + (1.9 if detail else 0), title, ha="center", va="center",
-                fontsize=7.4, fontweight="bold", color="#111827", zorder=3)
-        if detail:
-            ax.text(cx, cy - 2.4, detail, ha="center", va="center", fontsize=7.0,
-                    color="#1f2937", zorder=3, linespacing=1.25)
+    The original was designed on an 18.2 x 11.6 cm canvas at 6.1-6.7 pt and
+    then placed at 0.90\\textwidth in the paper, which scaled it down by
+    0.605x -- so its labels actually printed at 3.7-4.1 pt, well under the
+    7 pt Springer floor. That is the defect the terse rewrite was trying to
+    fix, but it over-corrected by cutting content instead of just building
+    the same design at true size. Here the coordinate system is inches, so
+    box sizes below can be read directly as physical dimensions, and no
+    `\\includegraphics` width= scaling is ever applied to this file.
+    """
+    W, H = 4.70, 3.55  # inches; 11.94 x 9.02 cm, under the 12 cm cap
+    fig, ax = plt.subplots(figsize=(W, H))
+    ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis("off")
+
+    _bounds_violations = []
+
+    def box(cx, cy, w, h, text, fc, fontsize=7.1, fontweight="normal", ec="#374151"):
+        left, right = cx - w / 2, cx + w / 2
+        bottom, top = cy - h / 2, cy + h / 2
+        if left < 0 or right > W or bottom < 0 or top > H:
+            _bounds_violations.append(
+                f"{text.splitlines()[0]!r}: [{left:.2f},{right:.2f}]x[{bottom:.2f},{top:.2f}] "
+                f"outside canvas [0,{W}]x[0,{H}]")
+        ax.add_patch(FancyBboxPatch(
+            (left, bottom), w, h,
+            boxstyle="round,pad=0.02,rounding_size=0.05",
+            linewidth=0.9, edgecolor=ec, facecolor=fc, zorder=2,
+        ))
+        ax.text(cx, cy, text, ha="center", va="center", fontsize=fontsize,
+                fontweight=fontweight, color="#111827", zorder=3, linespacing=1.30)
         return (cx, cy, w, h)
 
-    def arrow(b1, b2, s, e, rad=0.0):
+    def link(b1, b2, p1=None, p2=None, rad=0.0, color="#4b5563", lw=0.9):
         x1, y1, w1, h1 = b1; x2, y2, w2, h2 = b2
         P = {"r": (x1 + w1 / 2, y1), "l": (x1 - w1 / 2, y1),
              "t": (x1, y1 + h1 / 2), "b": (x1, y1 - h1 / 2)}
         Q = {"r": (x2 + w2 / 2, y2), "l": (x2 - w2 / 2, y2),
              "t": (x2, y2 + h2 / 2), "b": (x2, y2 - h2 / 2)}
-        ax.add_patch(FancyArrowPatch(P[s], Q[e], arrowstyle="-|>", mutation_scale=6,
-                                     lw=0.8, color="#4b5563", zorder=1,
-                                     shrinkA=1.5, shrinkB=1.5,
+        start = P[p1] if p1 else (x1, y1)
+        end = Q[p2] if p2 else (x2, y2)
+        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=6.5,
+                                     lw=lw, color=color, zorder=1, shrinkA=1.5, shrinkB=1.5,
                                      connectionstyle=f"arc3,rad={rad}"))
 
-    y1, y2, y3 = 50, 30, 9
-    ax.text(0, 61.5, "(a)  Per-cycle calibration", color="#1e3a8a", va="top", fontsize=7.4, fontweight="bold", zorder=6,
-            bbox=dict(facecolor="white", edgecolor="none", pad=0.4))
-    a1 = box(12.5, y1, 23, 9.5, "Cycle audio", "ICBHI segment", "#eef2ff")
-    a2 = box(37.5, y1, 23, 9.5, "31-d features", "spectral, MFCC", "#e0e7ff")
-    a3 = box(62.5, y1, 23, 9.5, "Random forest", "class-balanced", "#dbeafe")
-    a4 = box(87.5, y1, 23, 9.5, "Isotonic calib.", "ECE .198 to .147", "#cffafe")
-    for p, q in [(a1, a2), (a2, a3), (a3, a4)]:
-        arrow(p, q, "r", "l")
+    def stage_label(x, y, text, color):
+        ax.text(x, y, text, color=color, va="top", ha="left", fontsize=7.6,
+                fontweight="bold", zorder=6,
+                bbox=dict(facecolor="white", edgecolor="none", pad=0.5))
 
-    ax.text(0, 41.5, "(b)  Cycle-to-patient aggregation", color="#92400e", va="top", fontsize=7.4, fontweight="bold", zorder=6,
-            bbox=dict(facecolor="white", edgecolor="none", pad=0.4))
-    b1 = box(87.5, y2, 23, 9.5, "Patient summary", "14-d descriptor", "#fde68a")
-    b2 = box(55.0, y2, 35, 9.5, "CARE-Lung aggregator", "logistic regression", "#fecaca")
-    b3 = box(15.5, y2, 27, 9.5, "Patient score", "AUROC 0.832", "#fee2e2")
-    arrow(a4, b1, "b", "t")
-    arrow(b1, b2, "l", "r"); arrow(b2, b3, "l", "r")
+    # Three row-bands of equal height, each with its own label strip above it.
+    band_h = H / 3
+    y1 = H - band_h / 2 - 0.14   # row (a) center
+    y2 = H - band_h - band_h / 2 - 0.10   # row (b) center
+    y3 = band_h / 2 - 0.04                 # row (c) center
 
-    ax.text(0, 20.5, "(c)  Decision and conformal triage", color="#065f46", va="top", fontsize=7.4, fontweight="bold", zorder=6,
-            bbox=dict(facecolor="white", edgecolor="none", pad=0.4))
-    c1 = box(25.0, y3, 44, 10.5, "Operating point", "Youden J, held-out split", "#dcfce7")
-    c2 = box(74.0, y3, 46, 10.5, "Conformal referral", "screen +/-, or refer", "#bbf7d0")
-    arrow(b3, c1, "b", "t", rad=0.18); arrow(b3, c2, "b", "t", rad=-0.14)
+    # === Row (a): per-cycle calibration, 5 nodes left to right ==============
+    bw_a, gap_a = 0.86, 0.045
+    xs_a = [0.05 + bw_a / 2 + i * (bw_a + gap_a) for i in range(5)]
+    a1 = box(xs_a[0], y1, bw_a, 0.72,
+             "Respiratory\ncycle\n(ICBHI)", "#eef2ff", fontsize=7.0)
+    a2 = box(xs_a[1], y1, bw_a, 0.72,
+             "Acoustic\nfeatures\n(31-d, MFCC)", "#e0e7ff", fontsize=7.0)
+    a3 = box(xs_a[2], y1, bw_a, 0.72,
+             "Random forest\n(RF-train,\nbalanced)", "#dbeafe", fontsize=7.0)
+    a4 = box(xs_a[3], y1, bw_a, 0.72,
+             "Isotonic\ncalibration\n(calibration)", "#cffafe", fontsize=7.0)
+    a5 = box(xs_a[4], y1, bw_a, 0.72,
+             "Calibrated\nposterior\nECE 0.198\nto 0.147", "#fef9c3",
+             fontweight="bold", fontsize=7.0)
+    for p, q in [(a1, a2), (a2, a3), (a3, a4), (a4, a5)]:
+        link(p, q, "r", "l")
 
-    fig.tight_layout(pad=0.2)
+    # === Row (b): cycle-to-patient aggregation, right to left ===============
+    b1 = box(xs_a[4], y2, bw_a, 0.72,
+             "Cycle to\npatient\n(14-d summary)",
+             "#fde68a", fontsize=7.0)
+    b2 = box(2.35, y2, 1.30, 0.72,
+             "CARE-Lung aggregator\n(regularised logistic\nregression)",
+             "#fecaca", fontweight="bold", fontsize=7.0)
+    b3 = box(0.75, y2, 1.30, 0.72,
+             "Patient screening score\nAUROC 0.832, F1 0.809",
+             "#fee2e2", fontweight="bold", fontsize=7.0)
+    link(a5, b1, "b", "t")
+    link(b1, b2, "l", "r"); link(b2, b3, "l", "r")
+
+    # === Row (c): calibrated decision and conformal triage ==================
+    c1 = box(1.00, y3, 1.85, 0.72,
+             "Operating-point decision:\nYouden's J on the held-out\n"
+             "threshold-selection split\n-> screen-/screen+",
+             "#dcfce7", fontsize=7.0)
+    c2 = box(3.25, y3, 2.55, 0.72,
+             "Split-conformal referral: nonconformity\n"
+             "1 - score (abnormal), score (healthy);\n"
+             "quantile at target error alpha ->\n"
+             "{healthy}, {abnormal}, or both = REFER",
+             "#bbf7d0", fontweight="bold", fontsize=7.0)
+    link(b3, c1, "b", "t", rad=0.22)
+    link(b3, c2, "b", "t", rad=-0.14)
+
+    # band boundaries, top to bottom: H -> 2*band_h -> band_h -> 0
+    stage_label(0.03, H - 0.06, "(a)  Per-cycle feature extraction and calibration", "#1e3a8a")
+    stage_label(0.03, 2 * band_h - 0.02, "(b)  Cycle-to-patient aggregation", "#92400e")
+    stage_label(0.03, band_h - 0.02, "(c)  Calibrated decision and conformal triage", "#065f46")
+
+    for yy in (2 * band_h, band_h):
+        ax.plot([0.03, W - 0.03], [yy, yy], color="#d1d5db", lw=0.6,
+                ls=(0, (4, 3)), zorder=0)
+
+    if _bounds_violations:
+        raise RuntimeError("Fig 2 boxes exceed the canvas:\n  " + "\n  ".join(_bounds_violations))
+
+    fig.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01)
     save(fig, "Fig02-44.pdf")
 
 
