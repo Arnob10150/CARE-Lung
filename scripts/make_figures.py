@@ -135,6 +135,19 @@ def fig02_architecture():
 
     _bounds_violations = []
 
+    # Style constants matched to the original design's true physical values
+    # (the original's data-unit coordinates mapped to inches via its own
+    # 7.15in-wide canvas: rounding_size 0.073in, pad 0.037in, border 1.1pt,
+    # arrow 1.25pt/scale 9). `pad` here inflates the drawn box beyond the
+    # (w, h) footprint used for layout math, so it eats into the gap between
+    # neighbouring boxes, not into the box's own text area -- it must be
+    # sized jointly with the gap, not independently.
+    BOX_PAD = 0.028
+    BOX_ROUND = 0.062
+    BOX_LW = 1.05
+    ARROW_LW = 1.1
+    ARROW_SCALE = 8.2
+
     def box(cx, cy, w, h, text, fc, fontsize=7.1, fontweight="normal", ec="#374151"):
         left, right = cx - w / 2, cx + w / 2
         bottom, top = cy - h / 2, cy + h / 2
@@ -144,14 +157,14 @@ def fig02_architecture():
                 f"outside canvas [0,{W}]x[0,{H}]")
         ax.add_patch(FancyBboxPatch(
             (left, bottom), w, h,
-            boxstyle="round,pad=0.02,rounding_size=0.05",
-            linewidth=0.9, edgecolor=ec, facecolor=fc, zorder=2,
+            boxstyle=f"round,pad={BOX_PAD},rounding_size={BOX_ROUND}",
+            linewidth=BOX_LW, edgecolor=ec, facecolor=fc, zorder=2,
         ))
         ax.text(cx, cy, text, ha="center", va="center", fontsize=fontsize,
                 fontweight=fontweight, color="#111827", zorder=3, linespacing=1.30)
         return (cx, cy, w, h)
 
-    def link(b1, b2, p1=None, p2=None, rad=0.0, color="#4b5563", lw=0.9):
+    def link(b1, b2, p1=None, p2=None, rad=0.0, color="#4b5563", lw=ARROW_LW):
         x1, y1, w1, h1 = b1; x2, y2, w2, h2 = b2
         P = {"r": (x1 + w1 / 2, y1), "l": (x1 - w1 / 2, y1),
              "t": (x1, y1 + h1 / 2), "b": (x1, y1 - h1 / 2)}
@@ -159,8 +172,8 @@ def fig02_architecture():
              "t": (x2, y2 + h2 / 2), "b": (x2, y2 - h2 / 2)}
         start = P[p1] if p1 else (x1, y1)
         end = Q[p2] if p2 else (x2, y2)
-        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=6.5,
-                                     lw=lw, color=color, zorder=1, shrinkA=1.5, shrinkB=1.5,
+        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=ARROW_SCALE,
+                                     lw=lw, color=color, zorder=1, shrinkA=2, shrinkB=2,
                                      connectionstyle=f"arc3,rad={rad}"))
 
     def stage_label(x, y, text, color):
@@ -175,7 +188,12 @@ def fig02_architecture():
     y3 = band_h / 2 - 0.04                 # row (c) center
 
     # === Row (a): per-cycle calibration, 5 nodes left to right ==============
-    bw_a, gap_a = 0.86, 0.045
+    # gap/width ratio ~0.12 here (was 0.05): with BOX_PAD inflating each box
+    # by 0.028in on both sides, the earlier 0.045in nominal gap left only
+    # ~0.005in of actually visible whitespace between boxes -- they read as
+    # touching. This trims box width slightly to fund a gap that is visibly
+    # a gap once the pad inflation is subtracted (effective ~0.06in).
+    bw_a, gap_a = 0.815, 0.115
     xs_a = [0.05 + bw_a / 2 + i * (bw_a + gap_a) for i in range(5)]
     a1 = box(xs_a[0], y1, bw_a, 0.72,
              "Respiratory\ncycle\n(ICBHI)", "#eef2ff", fontsize=7.0)
@@ -205,11 +223,11 @@ def fig02_architecture():
     link(b1, b2, "l", "r"); link(b2, b3, "l", "r")
 
     # === Row (c): calibrated decision and conformal triage ==================
-    c1 = box(1.00, y3, 1.85, 0.72,
+    c1 = box(0.975, y3, 1.85, 0.72,
              "Operating-point decision:\nYouden's J on the held-out\n"
              "threshold-selection split\n-> screen-/screen+",
              "#dcfce7", fontsize=7.0)
-    c2 = box(3.25, y3, 2.55, 0.72,
+    c2 = box(3.325, y3, 2.55, 0.72,
              "Split-conformal referral: nonconformity\n"
              "1 - score (abnormal), score (healthy);\n"
              "quantile at target error alpha ->\n"
